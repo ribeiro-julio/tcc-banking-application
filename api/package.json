@@ -1,0 +1,20 @@
+{
+  "name": "tcc-banking-application-api",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "API for the banking web application built with the BSA Framework for Secure Software",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Julio Ribeiro <julio.ribeiro303@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.3.1",
+    "bcrypt": "^5.1.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "prisma": "^5.3.1"
+  }
+}
