@@ -5,7 +5,7 @@
   "description": "API for the banking web application built with the BSA Framework for Secure Software",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js"
   },
   "author": "Julio Ribeiro <julio.ribeiro303@gmail.com>",
   "license": "ISC",
