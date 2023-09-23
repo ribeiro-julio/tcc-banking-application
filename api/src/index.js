@@ -3,6 +3,12 @@ import { rateLimit } from "express-rate-limit";
 
 import { loginController } from "./controllers/login.js";
 import { logger, parseLog } from "./logger.js";
+import {
+  otpDisableController,
+  otpGenerateController,
+  otpValidateController,
+  otpVerifyController,
+} from "./controllers/otp.js";
 import { PORT } from "./env.js";
 
 const app = express();
@@ -16,6 +22,10 @@ const loginRateLimiter = rateLimit({
 });
 
 app.post("/api/login", loginRateLimiter, loginController);
+app.post("/api/otp/disable", otpDisableController);
+app.post("/api/otp/generate", otpGenerateController);
+app.post("/api/otp/validate", otpValidateController);
+app.post("/api/otp/verify", loginRateLimiter, otpVerifyController);
 
 app.all("*", (req, res) => {
   const log = parseLog(req, "404 page accessed");
