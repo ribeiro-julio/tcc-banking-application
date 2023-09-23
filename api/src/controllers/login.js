@@ -26,7 +26,7 @@ export async function loginController(req, res) {
     const user = await prisma.user.findUnique({ where: { email: email } });
 
     if (user === null) {
-      const log = parseLog(req, `Failed login attempt for ${email}`);
+      const log = parseLog(req, `Failed login attempt with email ${email}`);
       logger.warn(log.message, log.data);
 
       return res.status(401).json({
@@ -35,7 +35,7 @@ export async function loginController(req, res) {
     }
 
     if (!(await bcrypt.compare(password, user.password))) {
-      const log = parseLog(req, `Failed login attempt for ${email}`);
+      const log = parseLog(req, `Failed login attempt with email ${email}`);
       logger.warn(log.message, log.data);
 
       return res.status(401).json({
@@ -50,7 +50,7 @@ export async function loginController(req, res) {
       authorized = false;
     }
 
-    const log = parseLog(req, `Successful login for ${email}`);
+    const log = parseLog(req, `Successful login for user ${user.id}`);
     logger.info(log.message, log.data);
 
     return res.status(200).json({
