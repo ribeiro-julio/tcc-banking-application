@@ -1,16 +1,26 @@
 import express from "express";
+import { rateLimit } from "express-rate-limit";
 
-import { login } from "./controllers/login.js";
-
+import { loginController } from "./controllers/login.js";
+import { logger, parseLog } from "./logger.js";
 import { PORT } from "./env.js";
 
 const app = express();
 
 app.use(express.json());
 
-app.post("/api/login", login);
+const loginRateLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  message: "Request limit reached. Try again in 5 minutes",
+});
 
-app.all("*", (_, res) => {
+app.post("/api/login", loginRateLimiter, loginController);
+
+app.all("*", (req, res) => {
+  const log = parseLog(req, "404 page accessed");
+  logger.warn(log.message, log.data);
+
   res.status(404).json({
     error: `Not found`,
   });
