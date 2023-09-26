@@ -4,6 +4,7 @@ import { logger, parseErrorLog, parseLog } from "../logger.js";
 import { PrismaClient } from "@prisma/client";
 
 import { JWT_SECRET } from "../env.js";
+import { validEmail, validPassword } from "../helpers/validators.js";
 
 const prisma = new PrismaClient();
 
@@ -15,6 +16,9 @@ export async function loginController(req, res) {
     typeof req.body.email !== "string" ||
     typeof req.body.password !== "string"
   ) {
+    const log = parseLog(req, `Failed login attempt with bad request`);
+    logger.warn(log.message, log.data);
+
     return res.status(400).json({
       error: "Bad request",
     });
@@ -22,6 +26,15 @@ export async function loginController(req, res) {
 
   try {
     const { email, password } = req.body;
+
+    if (!validEmail(email) || !validPassword(password)) {
+      const log = parseLog(req, `Invalid inputs`);
+      logger.warn(log.message, log.data);
+
+      return res.status(422).json({
+        error: "Invalid inputs",
+      });
+    }
 
     const user = await prisma.user.findUnique({ where: { email: email } });
 
@@ -43,18 +56,16 @@ export async function loginController(req, res) {
       });
     }
 
-    let otpEnabled = false;
-    let authorized = true;
-    if (user.otp_enabled) {
-      otpEnabled = true;
-      authorized = false;
-    }
-
     const log = parseLog(req, `Successful login for user ${user.id}`);
     logger.info(log.message, log.data);
 
+    let authorized = true;
+    if (user.otp_enabled) {
+      authorized = false;
+    }
+
     return res.status(200).json({
-      token: jwt.sign({ userId: user.id, otpEnabled, authorized }, JWT_SECRET, {
+      token: jwt.sign({ userId: user.id, authorized }, JWT_SECRET, {
         expiresIn: "30m",
       }),
     });
