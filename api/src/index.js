@@ -27,7 +27,7 @@ app.post("/api/otp/disable", otpDisableController);
 app.post("/api/otp/generate", otpGenerateController);
 app.post("/api/otp/validate", otpValidateController);
 app.post("/api/otp/verify", loginRateLimiter, otpVerifyController);
-api.post("api/transfer", transferMoney);
+app.post("/api/transfer", transferMoney);
 
 app.all("*", (req, res) => {
   const log = parseLog(req, "404 page accessed");

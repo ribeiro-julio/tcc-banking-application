@@ -16,23 +16,23 @@ export async function loginController(req, res) {
     typeof req.body.email !== "string" ||
     typeof req.body.password !== "string"
   ) {
-    const log = parseLog(req, `Failed login attempt with bad request`);
+    const log = parseLog(req, "Bad request");
     logger.warn(log.message, log.data);
 
     return res.status(400).json({
-      error: "Bad request",
+      error: "Request body must contain only the email and password",
     });
   }
 
   try {
     const { email, password } = req.body;
 
-    if (!validEmail(email) || !validPassword(password)) {
-      const log = parseLog(req, `Invalid inputs`);
+    if (!validEmail(email)) {
+      const log = parseLog(req, "Invalid email");
       logger.warn(log.message, log.data);
 
       return res.status(422).json({
-        error: "Invalid inputs",
+        error: "Invalid email",
       });
     }
 
