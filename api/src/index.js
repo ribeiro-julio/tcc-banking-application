@@ -3,7 +3,11 @@ import { rateLimit } from "express-rate-limit";
 
 import { loginController } from "./controllers/login.js";
 import { logger, parseLog } from "./logger.js";
-import { getMeController, patchMeController } from "./controllers/me.js";
+import {
+  getMeController,
+  patchPasswordController,
+  patchPinController,
+} from "./controllers/me.js";
 import {
   otpDisableController,
   otpGenerateController,
@@ -26,7 +30,8 @@ const loginRateLimiter = rateLimit({
 app.post("/api/login", loginRateLimiter, loginController);
 
 app.get("/api/me", getMeController);
-app.patch("/api/me", patchMeController);
+app.patch("/api/me/password", patchPasswordController);
+app.patch("/api/me/pin", patchPinController);
 
 app.post("/api/otp/disable", otpDisableController);
 app.post("/api/otp/generate", otpGenerateController);

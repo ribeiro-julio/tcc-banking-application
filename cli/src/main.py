@@ -1,6 +1,6 @@
 import os
 
-from helpers.me import get_me
+from helpers.me import get_me, patch_password, patch_pin
 from helpers.login import login
 from helpers.otp import configure_otp
 
@@ -22,7 +22,7 @@ def main():
             print(f"\nBem-vindo {me['name']}. Seu saldo atual é R$ {me['balance']}")
             
             print("\nSelecione uma opção:")
-            print("1. Realizar transfêrencia")
+            print("1. Realizar transferência")
             print("2. Configurar autenticação de dois fatores")
             print("3. Trocar senha de acesso")
             print("4. Trocar PIN")
@@ -43,11 +43,11 @@ def main():
             continue
 
         if opcao == "3":
-            # Trocar senha de acesso
+            patch_password(session)
             continue
 
         if opcao == "4":
-            # Trocar PIN
+            patch_pin(session)
             continue
 
         if opcao == "0":
