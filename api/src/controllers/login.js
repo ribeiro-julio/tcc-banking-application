@@ -66,7 +66,7 @@ export async function loginController(req, res) {
 
     return res.status(200).json({
       token: jwt.sign({ userId: user.id, authorized }, JWT_SECRET, {
-        expiresIn: "30m",
+        expiresIn: "15m",
       }),
     });
   } catch (error) {

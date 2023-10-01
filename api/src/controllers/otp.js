@@ -50,7 +50,11 @@ export async function otpDisableController(req, res) {
     const log = parseLog(req, `Successfully disabled OTP for user ${user.id}`);
     logger.info(log.message, log.data);
 
-    return res.status(200).json({ message: "Success" });
+    return res.status(200).json({
+      token: jwt.sign({ userId: user.id, authorized: true }, JWT_SECRET, {
+        expiresIn: "15m",
+      }),
+    });
   } catch (error) {
     const log = parseErrorLog(req, error);
     logger.error(log.message, log.data);
@@ -191,7 +195,7 @@ export async function otpValidateController(req, res) {
 
     return res.status(200).json({
       token: jwt.sign({ userId: user.id, authorized: true }, JWT_SECRET, {
-        expiresIn: "30m",
+        expiresIn: "15m",
       }),
     });
   } catch (error) {
@@ -286,7 +290,7 @@ export async function otpVerifyController(req, res) {
 
     return res.status(200).json({
       token: jwt.sign({ userId: user.id, authorized: true }, JWT_SECRET, {
-        expiresIn: "30m",
+        expiresIn: "15m",
       }),
     });
   } catch (error) {
