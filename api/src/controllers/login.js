@@ -4,7 +4,7 @@ import { logger, parseErrorLog, parseLog } from "../logger.js";
 import { PrismaClient } from "@prisma/client";
 
 import { JWT_SECRET } from "../env.js";
-import { validEmail, validPassword } from "../helpers/validators.js";
+import { validEmail } from "../helpers/validators.js";
 
 const prisma = new PrismaClient();
 

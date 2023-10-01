@@ -1,3 +1,11 @@
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
+
+import { JWT_SECRET } from "../env.js";
+import { logger, parseErrorLog, parseLog } from "../logger.js";
+
+const prisma = new PrismaClient();
+
 export async function getMeController(req, res) {
   if (Object.keys(req.body).length !== 0) {
     const log = parseLog(req, "Bad request");
