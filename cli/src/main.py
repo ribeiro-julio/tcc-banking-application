@@ -1,5 +1,6 @@
 import os
 
+from helpers.me import get_me
 from helpers.login import login
 from helpers.otp import configure_otp
 
@@ -9,18 +10,22 @@ def main():
     while True:
         os.system("clear")
 
-        print("TCC Banking Application\n")
+        print("TCC Banking Application")
         
-        print("Selecione uma opção:")
         if session == None:
+            print("\nSelecione uma opção:")
             print("1. Entrar")
             print("0. Sair")
         else:
-            print("1. Ver saldo")
-            print("2. Realizar transfêrencia")
-            print("3. Configurar autenticação de dois fatores")
-            print("4. Trocar senha de acesso")
-            print("5. Trocar PIN")
+            me = get_me(session)
+
+            print(f"\nBem-vindo {me['name']}. Seu saldo atual é R$ {me['balance']}")
+            
+            print("\nSelecione uma opção:")
+            print("1. Realizar transfêrencia")
+            print("2. Configurar autenticação de dois fatores")
+            print("3. Trocar senha de acesso")
+            print("4. Trocar PIN")
             print("0. Sair")
         
         opcao = input()
@@ -30,22 +35,18 @@ def main():
             continue
 
         if opcao == "1" and session != None:
-            # Ver saldo
-            continue
-
-        if opcao == "2":
             # Realizar transferencia
             continue
 
-        if opcao == "3":
+        if opcao == "2":
             session = configure_otp(session)
             continue
 
-        if opcao == "4":
+        if opcao == "3":
             # Trocar senha de acesso
             continue
 
-        if opcao == "5":
+        if opcao == "4":
             # Trocar PIN
             continue
 
