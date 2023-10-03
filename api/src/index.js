@@ -21,23 +21,24 @@ const app = express();
 
 app.use(express.json());
 
-const loginRateLimiter = rateLimit({
+const rateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 10,
   message: "Request limit reached. Try again in 5 minutes",
 });
 
-app.post("/api/login", loginRateLimiter, loginController);
+app.post("/api/login", rateLimiter, loginController);
 
-app.get("/api/me", getMeController);
-app.patch("/api/me/password", patchPasswordController);
+app.get("/api/me", rateLimiter, getMeController);
+app.patch("/api/me/password", rateLimiter, patchPasswordController);
 app.patch("/api/me/pin", patchPinController);
 
-app.post("/api/otp/disable", otpDisableController);
-app.post("/api/otp/generate", otpGenerateController);
-app.post("/api/otp/validate", otpValidateController);
-app.post("/api/otp/verify", loginRateLimiter, otpVerifyController);
-app.post("/api/transfer", transferMoney);
+app.post("/api/otp/disable", rateLimiter, otpDisableController);
+app.post("/api/otp/generate", rateLimiter, otpGenerateController);
+app.post("/api/otp/validate", rateLimiter, otpValidateController);
+app.post("/api/otp/verify", rateLimiter, otpVerifyController);
+
+app.post("/api/transfer", rateLimiter, transferMoney);
 
 app.all("*", (req, res) => {
   const log = parseLog(req, "404 page accessed");
