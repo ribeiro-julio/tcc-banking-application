@@ -2,6 +2,7 @@ import os
 
 from helpers.me import get_me, patch_password, patch_pin
 from helpers.login import login
+from helpers.transfer import transfer_money
 from helpers.otp import configure_otp
 
 def main():
@@ -19,7 +20,7 @@ def main():
         else:
             me = get_me(session)
 
-            print(f"\nBem-vindo {me['name']}. Seu saldo atual é R$ {me['balance']}")
+            print(f"\nBem-vindo {me['name']}. Seu saldo atual é c${me['balance']}")
             
             print("\nSelecione uma opção:")
             print("1. Realizar transferência")
@@ -35,7 +36,7 @@ def main():
             continue
 
         if opcao == "1" and session != None:
-            # Realizar transferencia
+            transfer_money(session)
             continue
 
         if opcao == "2":
