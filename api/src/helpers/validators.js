@@ -66,6 +66,50 @@ export function validLoginRequestBody(req) {
   return true;
 }
 
+export function validPatchPasswordRequestBody(req) {
+  if (
+    Object.keys(req.body).length !== 3 ||
+    !req.body.hasOwnProperty("oldPassword") ||
+    !req.body.hasOwnProperty("newPassword") ||
+    !req.body.hasOwnProperty("newPasswordConfirmation") ||
+    typeof req.body.oldPassword !== "string" ||
+    typeof req.body.newPassword !== "string" ||
+    typeof req.body.newPasswordConfirmation !== "string"
+  ) {
+    const log = parseLog(
+      req,
+      "Request body must contain only the oldPassword, newPassword and newPasswordConfirmation"
+    );
+    logger.warn(log.message, log.data);
+
+    return false;
+  }
+
+  return true;
+}
+
+export function validPatchPinRequestBody(req) {
+  if (
+    Object.keys(req.body).length !== 3 ||
+    !req.body.hasOwnProperty("oldPin") ||
+    !req.body.hasOwnProperty("newPin") ||
+    !req.body.hasOwnProperty("newPinConfirmation") ||
+    typeof req.body.oldPin !== "string" ||
+    typeof req.body.newPin !== "string" ||
+    typeof req.body.newPinConfirmation !== "string"
+  ) {
+    const log = parseLog(
+      req,
+      "Request body must contain only the oldPin, newPin and newPinConfirmation"
+    );
+    logger.warn(log.message, log.data);
+
+    return false;
+  }
+
+  return true;
+}
+
 export function validAmount(amount) {
   const regex = /^[1-9][0-9]*$/;
   return regex.test(amount);
