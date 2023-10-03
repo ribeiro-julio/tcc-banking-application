@@ -1,5 +1,5 @@
-import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import jwt from "jsonwebtoken";
 
 import { JWT_SECRET } from "../env.js";
 import { parseLog, logger, parseErrorLog } from "../logger.js";
