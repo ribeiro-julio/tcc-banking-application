@@ -1,11 +1,9 @@
-import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
-import { JWT_SECRET } from "../env.js";
-import { logger, parseErrorLog, parseLog } from "../logger.js";
+import { parseLog, logger, parseErrorLog } from "../logger.js";
+import { getAuthenticatedUser } from "../helpers/auth.js";
 import { validAmount, validEmail, validPin } from "../helpers/validators.js";
-
-const prisma = new PrismaClient();
 
 export async function transferMoney(req, res) {
   if (
@@ -17,15 +15,18 @@ export async function transferMoney(req, res) {
     typeof req.body.destination !== "string" ||
     typeof req.body.pin !== "string"
   ) {
-    const log = parseLog(req, `Bad request`);
+    const log = parseLog(
+      req,
+      "Request must contain only the amount, destination and PIN"
+    );
     logger.warn(log.message, log.data);
 
     return res.status(400).json({
-      error: "Bad request",
+      error: "Request must contain only the amount, destination and PIN",
     });
   }
 
-  const user = await getAuthenticatedUser(req.get("Authorization"));
+  const user = await getAuthenticatedUser(req);
 
   if (user === null) {
     return res.status(401).json({
@@ -34,28 +35,39 @@ export async function transferMoney(req, res) {
   }
 
   try {
+    const prisma = new PrismaClient();
+
     const { amount, destination, pin } = req.body;
 
-    if (!validAmount(amount) || !validEmail(destination) || !validPin(pin)) {
-      const log = parseLog(req, `Invalid inputs`);
+    if (!validAmount(amount)) {
+      const log = parseLog(req, "Invalid amount");
       logger.warn(log.message, log.data);
 
       return res.status(422).json({
-        error: "Invalid inputs",
+        error: "Invalid amount",
       });
     }
 
-    if (!(await bcrypt.compare(pin, user.pin))) {
-      const log = parseLog(req, `Wrong pin`);
+    if (!validEmail(destination)) {
+      const log = parseLog(req, "Invalid destination");
       logger.warn(log.message, log.data);
 
-      return res.status(403).json({
-        error: "Forbidden",
+      return res.status(422).json({
+        error: "Invalid destination",
       });
     }
 
-    if (user.balance - amount < 0) {
-      const log = parseLog(req, `Insufficient balance`);
+    if (!validPin(pin)) {
+      const log = parseLog(req, "Invalid PIN");
+      logger.warn(log.message, log.data);
+
+      return res.status(422).json({
+        error: "Invalid PIN",
+      });
+    }
+
+    if (user.balance - Number(amount) < 0) {
+      const log = parseLog(req, "Insufficient balance");
       logger.warn(log.message, log.data);
 
       return res.status(422).json({
@@ -63,12 +75,33 @@ export async function transferMoney(req, res) {
       });
     }
 
+    if (user.email === destination) {
+      const log = parseLog(
+        req,
+        "Destination must be different than the origin"
+      );
+      logger.warn(log.message, log.data);
+
+      return res.status(422).json({
+        error: "Destination must be different than the origin",
+      });
+    }
+
+    if (!(await bcrypt.compare(pin, user.pin))) {
+      const log = parseLog(req, "Wrong PIN");
+      logger.warn(log.message, log.data);
+
+      return res.status(403).json({
+        error: "Wrong PIN",
+      });
+    }
+
     const destinationUser = await prisma.user.findUnique({
-      where: { id: destination },
+      where: { email: destination },
     });
 
     if (destinationUser === null) {
-      const log = parseLog(req, `Destination not found`);
+      const log = parseLog(req, "Destination not found");
       logger.warn(log.message, log.data);
 
       return res.status(422).json({
@@ -77,12 +110,12 @@ export async function transferMoney(req, res) {
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.account.update({
+      await tx.user.update({
         data: { balance: { decrement: Number(amount) } },
         where: { email: user.email },
       });
 
-      await tx.account.update({
+      await tx.user.update({
         data: { balance: { increment: Number(amount) } },
         where: { email: destinationUser.email },
       });
@@ -90,12 +123,12 @@ export async function transferMoney(req, res) {
 
     return res.status(200).json({
       confirmation: {
-        amount: amount,
+        origin: { name: user.name, email: user.email },
         destination: {
           name: destinationUser.name,
           email: destinationUser.email,
         },
-        origin: { name: user.name, email: user.email },
+        amount: amount,
       },
     });
   } catch (error) {
@@ -106,54 +139,4 @@ export async function transferMoney(req, res) {
       error: "Internal server error",
     });
   }
-}
-
-async function getAuthenticatedUser(authHeader) {
-  try {
-    if (!authHeader || !authHeader.includes("Bearer ")) {
-      const log = parseLog(req, `Missing authorization token`);
-      logger.warn(log.message, log.data);
-
-      return null;
-    }
-
-    let session = { userId: null, authorized: false };
-    jwt.verify(
-      authHeader.replace("Bearer ", ""),
-      JWT_SECRET,
-      (error, decoded) => {
-        if (!error) {
-          session = {
-            userId: decoded.userId,
-            authorized: decoded.authorized,
-          };
-        }
-      }
-    );
-
-    if (session.userId === null || !session.authorized) {
-      const log = parseLog(req, `Invalid authorization token`);
-      logger.warn(log.message, log.data);
-
-      return null;
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-    });
-
-    if (user === null) {
-      const log = parseLog(req, `Invalid user ${session.userId}`);
-      logger.warn(log.message, log.data);
-
-      return null;
-    }
-
-    return user;
-  } catch (error) {
-    const log = parseErrorLog(req, error);
-    logger.error(log.message, log.data);
-  }
-
-  return null;
 }
