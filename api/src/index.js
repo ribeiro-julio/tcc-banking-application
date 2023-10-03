@@ -2,7 +2,6 @@ import express from "express";
 import { rateLimit } from "express-rate-limit";
 
 import { loginController } from "./controllers/login.js";
-import { logger, parseLog } from "./logger.js";
 import {
   getMeController,
   patchPasswordController,
@@ -15,6 +14,7 @@ import {
   otpVerifyController,
 } from "./controllers/otp.js";
 import { transferMoney } from "./controllers/transfer.js";
+import { parseLog, logger } from "./logger.js";
 import { PORT } from "./env.js";
 
 const app = express();
