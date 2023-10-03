@@ -24,6 +24,26 @@ export function requestHasTokenOnBody(req) {
   return true;
 }
 
+export function validLoginRequestBody(req) {
+  if (
+    Object.keys(req.body).length !== 2 ||
+    !req.body.hasOwnProperty("email") ||
+    !req.body.hasOwnProperty("password") ||
+    typeof req.body.email !== "string" ||
+    typeof req.body.password !== "string"
+  ) {
+    const log = parseLog(
+      req,
+      "Request body must contain the email and password"
+    );
+    logger.warn(log.message, log.data);
+
+    return false;
+  }
+
+  return true;
+}
+
 export function validAmount(amount) {
   const regex = /^[1-9][0-9]*$/;
   return regex.test(amount);
