@@ -1,3 +1,29 @@
+export function requestHasEmptyBody(req) {
+  if (Object.keys(req.body).length !== 0) {
+    const log = parseLog(req, "Request body must be empty");
+    logger.warn(log.message, log.data);
+
+    return false;
+  }
+
+  return true;
+}
+
+export function requestHasTokenOnBody(req) {
+  if (
+    Object.keys(req.body).length !== 1 ||
+    !req.body.hasOwnProperty("token") ||
+    typeof req.body.token !== "string"
+  ) {
+    const log = parseLog(req, "Request body must contain the token");
+    logger.warn(log.message, log.data);
+
+    return false;
+  }
+
+  return true;
+}
+
 export function validAmount(amount) {
   const regex = /^[1-9][0-9]*$/;
   return regex.test(amount);

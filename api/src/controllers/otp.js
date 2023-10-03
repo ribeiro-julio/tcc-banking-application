@@ -1,42 +1,36 @@
-import crypto from "crypto";
-import CryptoJS from "crypto-js";
-import pkg from "hi-base32";
+import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import * as OTPAuth from "otpauth";
-import { PrismaClient } from "@prisma/client";
+import CryptoJS from "crypto-js";
+import pkg from "hi-base32";
+import crypto from "crypto";
 
-import { JWT_SECRET, TOTP_SECRET_ENCRYPTION_KEY } from "../env.js";
-import { logger, parseErrorLog, parseLog } from "../logger.js";
+import {
+  requestHasEmptyBody,
+  requestHasTokenOnBody,
+} from "../helpers/validators.js";
+import { getAuthenticatedUser } from "../helpers/auth.js";
+import { parseLog, logger, parseErrorLog } from "../logger.js";
+import { TOTP_SECRET_ENCRYPTION_KEY, JWT_SECRET } from "../env.js";
 import { validOtp } from "../helpers/validators.js";
 
-const prisma = new PrismaClient();
-
 export async function otpDisableController(req, res) {
-  if (Object.keys(req.body).length !== 0) {
-    const log = parseLog(req, "Bad request");
-    logger.warn(log.message, log.data);
-
-    return res.status(400).json({
-      error: "Request body must be empty",
-    });
+  if (!requestHasEmptyBody(req)) {
+    return res.status(400).json({ error: "Request body must be empty" });
   }
 
   const user = await getAuthenticatedUser(req, "authorized");
 
-  if (user === null) {
-    return res.status(401).json({
-      error: "Unauthorized",
-    });
-  }
+  if (user === null) return res.status(401).json({ error: "Unauthorized" });
 
   try {
+    const prisma = new PrismaClient();
+
     if (!user.otp_enabled && user.otp_secret === null) {
-      const log = parseLog(req, `User ${user.id} without active OTP`);
+      const log = parseLog(req, `User ${user.id} - OTP must be enabled`);
       logger.warn(log.message, log.data);
 
-      return res.status(400).json({
-        error: "User without active OTP",
-      });
+      return res.status(422).json({ error: "OTP must be enabled" });
     }
 
     await prisma.user.update({
@@ -47,7 +41,7 @@ export async function otpDisableController(req, res) {
       },
     });
 
-    const log = parseLog(req, `Successfully disabled OTP for user ${user.id}`);
+    const log = parseLog(req, `User ${user.id} - OTP disabled`);
     logger.info(log.message, log.data);
 
     return res.status(200).json({
@@ -59,38 +53,27 @@ export async function otpDisableController(req, res) {
     const log = parseErrorLog(req, error);
     logger.error(log.message, log.data);
 
-    res.status(500).json({
-      error: "Internal server error",
-    });
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 
 export async function otpGenerateController(req, res) {
-  if (Object.keys(req.body).length !== 0) {
-    const log = parseLog(req, "Bad request");
-    logger.warn(log.message, log.data);
-
-    return res.status(400).json({
-      error: "Request body must be empty",
-    });
+  if (!requestHasEmptyBody(req)) {
+    return res.status(400).json({ error: "Request body must be empty" });
   }
 
   const user = await getAuthenticatedUser(req, "authorized");
 
-  if (user === null) {
-    return res.status(401).json({
-      error: "Unauthorized",
-    });
-  }
+  if (user === null) return res.status(401).json({ error: "Unauthorized" });
 
   try {
+    const prisma = new PrismaClient();
+
     if (user.otp_enabled && user.otp_secret !== null) {
-      const log = parseLog(req, `User ${user.id} with OTP already configured`);
+      const log = parseLog(req, `User ${user.id} - OTP must be disabled`);
       logger.warn(log.message, log.data);
 
-      return res.status(422).json({
-        error: "User with OTP already configured",
-      });
+      return res.status(422).json({ error: "OTP must be disabled" });
     }
 
     const otpSecret = otpSecretGenerate();
@@ -113,7 +96,7 @@ export async function otpGenerateController(req, res) {
       },
     });
 
-    const log = parseLog(req, `Successfully generated OTP for user ${user.id}`);
+    const log = parseLog(req, `User ${user.id} - OTP generated`);
     logger.info(log.message, log.data);
 
     return res.status(200).json({ url: totp.toString(), secret: otpSecret });
@@ -121,53 +104,36 @@ export async function otpGenerateController(req, res) {
     const log = parseErrorLog(req, error);
     logger.error(log.message, log.data);
 
-    res.status(500).json({
-      error: "Internal server error",
-    });
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 
 export async function otpValidateController(req, res) {
-  if (
-    Object.keys(req.body).length !== 1 ||
-    !req.body.hasOwnProperty("token") ||
-    typeof req.body.token !== "string"
-  ) {
-    const log = parseLog(req, "Bad request");
-    logger.warn(log.message, log.data);
-
-    return res.status(400).json({
-      error: "Request body must contain only the token",
-    });
+  if (!requestHasTokenOnBody(req)) {
+    return res
+      .status(400)
+      .json({ error: "Request body must contain the token" });
   }
 
   const user = await getAuthenticatedUser(req, "unauthorized");
 
-  if (user === null) {
-    return res.status(401).json({
-      error: "Unauthorized",
-    });
-  }
+  if (user === null) return res.status(401).json({ error: "Unauthorized" });
 
   try {
     if (!user.otp_enabled || user.otp_secret === null) {
-      const log = parseLog(req, `User ${user.id} without OTP enabled`);
+      const log = parseLog(req, `User ${user.id} - OTP must be active`);
       logger.warn(log.message, log.data);
 
-      return res.status(422).json({
-        error: "OTP is not enabled",
-      });
+      return res.status(422).json({ error: "OTP must be active" });
     }
 
     const { token } = req.body;
 
     if (!validOtp(token)) {
-      const log = parseLog(req, "Invalid token");
+      const log = parseLog(req, `User ${user.id} - Invalid token`);
       logger.warn(log.message, log.data);
 
-      return res.status(422).json({
-        error: "Invalid token",
-      });
+      return res.status(422).json({ error: "Invalid token" });
     }
 
     const totp = new OTPAuth.TOTP({
@@ -182,15 +148,13 @@ export async function otpValidateController(req, res) {
     });
 
     if (totp.validate({ token: token, window: 1 }) === null) {
-      const log = parseLog(req, `User ${user.id} with wrong OTP token`);
+      const log = parseLog(req, `User ${user.id} - Wrong token`);
       logger.warn(log.message, log.data);
 
-      return res.status(401).json({
-        error: "Wrong token",
-      });
+      return res.status(401).json({ error: "Wrong token" });
     }
 
-    const log = parseLog(req, `Successfully validated OTP for user ${user.id}`);
+    const log = parseLog(req, `User ${user.id} - OTP validated`);
     logger.info(log.message, log.data);
 
     return res.status(200).json({
@@ -202,62 +166,45 @@ export async function otpValidateController(req, res) {
     const log = parseErrorLog(req, error);
     logger.error(log.message, log.data);
 
-    res.status(500).json({
-      error: "Internal server error",
-    });
+    res.status(500).json({ error: "Internal server error" });
   }
 }
 
 export async function otpVerifyController(req, res) {
-  if (
-    Object.keys(req.body).length !== 1 ||
-    !req.body.hasOwnProperty("token") ||
-    typeof req.body.token !== "string"
-  ) {
-    const log = parseLog(req, "Bad request");
-    logger.warn(log.message, log.data);
-
-    return res.status(400).json({
-      error: "Request body must contain only the token",
-    });
+  if (!requestHasTokenOnBody(req)) {
+    return res
+      .status(400)
+      .json({ error: "Request body must contain the token" });
   }
 
   const user = await getAuthenticatedUser(req, "authorized");
 
   if (user === null) {
-    return res.status(401).json({
-      error: "Unauthorized",
-    });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
     if (user.otp_enabled) {
-      const log = parseLog(req, `User ${user.id} with verified OTP`);
+      const log = parseLog(req, `User ${user.id} - OTP must not be verified`);
       logger.warn(log.message, log.data);
 
-      return res.status(422).json({
-        error: "OTP is already verified",
-      });
+      return res.status(422).json({ error: "OTP must not be verified" });
     }
 
     if (user.otp_secret === null) {
-      const log = parseLog(req, `User ${user.id} with OTP not enabled`);
+      const log = parseLog(req, `User ${user.id} - OTP must be generated`);
       logger.warn(log.message, log.data);
 
-      return res.status(422).json({
-        error: "OTP is not enabled",
-      });
+      return res.status(422).json({ error: "OTP must be generated" });
     }
 
     const { token } = req.body;
 
     if (!validOtp(token)) {
-      const log = parseLog(req, "Invalid token");
+      const log = parseLog(req, `User ${user.id} - Invalid token`);
       logger.warn(log.message, log.data);
 
-      return res.status(422).json({
-        error: "Invalid token",
-      });
+      return res.status(422).json({ error: "Invalid token" });
     }
 
     const totp = new OTPAuth.TOTP({
@@ -272,12 +219,10 @@ export async function otpVerifyController(req, res) {
     });
 
     if (totp.validate({ token: token, window: 1 }) === null) {
-      const log = parseLog(req, `User ${user.id} with wrong OTP token`);
+      const log = parseLog(req, `User ${user.id} - Wrong token`);
       logger.warn(log.message, log.data);
 
-      return res.status(401).json({
-        error: "Wrong token",
-      });
+      return res.status(401).json({ error: "Wrong token" });
     }
 
     await prisma.user.update({
@@ -285,7 +230,7 @@ export async function otpVerifyController(req, res) {
       data: { otp_enabled: true },
     });
 
-    const log = parseLog(req, `Successfully verified OTP for user ${user.id}`);
+    const log = parseLog(req, `User ${user.id} - OTP verified`);
     logger.info(log.message, log.data);
 
     return res.status(200).json({
@@ -297,69 +242,8 @@ export async function otpVerifyController(req, res) {
     const log = parseErrorLog(req, error);
     logger.error(log.message, log.data);
 
-    res.status(500).json({
-      error: "Internal server error",
-    });
+    res.status(500).json({ error: "Internal server error" });
   }
-}
-
-async function getAuthenticatedUser(req, method) {
-  try {
-    const authHeader = req.get("Authorization");
-
-    if (!authHeader || !authHeader.includes("Bearer ")) {
-      const log = parseLog(req, `Missing authorization token`);
-      logger.warn(log.message, log.data);
-
-      return null;
-    }
-
-    let session = { userId: null, authorized: false };
-    jwt.verify(
-      authHeader.replace("Bearer ", ""),
-      JWT_SECRET,
-      (error, decoded) => {
-        if (!error) {
-          session = {
-            userId: decoded.userId,
-            authorized: decoded.authorized,
-          };
-        }
-      }
-    );
-
-    if (session.userId === null) {
-      const log = parseLog(req, `Invalid authorization token`);
-      logger.warn(log.message, log.data);
-
-      return null;
-    }
-
-    if (method === "authorized" && !session.authorized) {
-      const log = parseLog(req, `Invalid authorization token`);
-      logger.warn(log.message, log.data);
-
-      return null;
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-    });
-
-    if (user === null) {
-      const log = parseLog(req, `Invalid user ${session.userId}`);
-      logger.warn(log.message, log.data);
-
-      return null;
-    }
-
-    return user;
-  } catch (error) {
-    const log = parseErrorLog(req, error);
-    logger.error(log.message, log.data);
-  }
-
-  return null;
 }
 
 function otpSecretGenerate() {

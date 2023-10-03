@@ -17,16 +17,16 @@ export async function transferMoney(req, res) {
   ) {
     const log = parseLog(
       req,
-      "Request must contain only the amount, destination and PIN"
+      "Request body must contain only the amount, destination and PIN"
     );
     logger.warn(log.message, log.data);
 
     return res.status(400).json({
-      error: "Request must contain only the amount, destination and PIN",
+      error: "Request body must contain only the amount, destination and PIN",
     });
   }
 
-  const user = await getAuthenticatedUser(req);
+  const user = await getAuthenticatedUser(req, "authorized");
 
   if (user === null) {
     return res.status(401).json({

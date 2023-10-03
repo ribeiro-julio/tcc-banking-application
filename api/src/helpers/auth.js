@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../env.js";
 import { parseLog, logger, parseErrorLog } from "../logger.js";
 
-export async function getAuthenticatedUser(req) {
+export async function getAuthenticatedUser(req, method) {
   try {
     const prisma = new PrismaClient();
 
@@ -31,8 +31,15 @@ export async function getAuthenticatedUser(req) {
       }
     );
 
-    if (session.userId === null || !session.authorized) {
+    if (session.userId === null) {
       const log = parseLog(req, "Invalid JWT");
+      logger.warn(log.message, log.data);
+
+      return null;
+    }
+
+    if (method === "authorized" && !session.authorized) {
+      const log = parseLog(req, `Invalid JWT`);
       logger.warn(log.message, log.data);
 
       return null;
