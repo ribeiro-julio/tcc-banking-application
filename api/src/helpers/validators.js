@@ -15,7 +15,29 @@ export function requestHasTokenOnBody(req) {
     !req.body.hasOwnProperty("token") ||
     typeof req.body.token !== "string"
   ) {
-    const log = parseLog(req, "Request body must contain the token");
+    const log = parseLog(req, "Request body must contain only the token");
+    logger.warn(log.message, log.data);
+
+    return false;
+  }
+
+  return true;
+}
+
+export function validTransferRequestBody(req) {
+  if (
+    Object.keys(req.body).length !== 3 ||
+    !req.body.hasOwnProperty("amount") ||
+    !req.body.hasOwnProperty("destination") ||
+    !req.body.hasOwnProperty("pin") ||
+    typeof req.body.amount !== "string" ||
+    typeof req.body.destination !== "string" ||
+    typeof req.body.pin !== "string"
+  ) {
+    const log = parseLog(
+      req,
+      "Request body must contain only the amount, destination and PIN"
+    );
     logger.warn(log.message, log.data);
 
     return false;
@@ -34,7 +56,7 @@ export function validLoginRequestBody(req) {
   ) {
     const log = parseLog(
       req,
-      "Request body must contain the email and password"
+      "Request body must contain only the email and password"
     );
     logger.warn(log.message, log.data);
 

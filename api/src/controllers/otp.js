@@ -112,7 +112,7 @@ export async function otpValidateController(req, res) {
   if (!requestHasTokenOnBody(req)) {
     return res
       .status(400)
-      .json({ error: "Request body must contain the token" });
+      .json({ error: "Request body must contain only the token" });
   }
 
   const user = await getAuthenticatedUser(req, "unauthorized");
@@ -174,7 +174,7 @@ export async function otpVerifyController(req, res) {
   if (!requestHasTokenOnBody(req)) {
     return res
       .status(400)
-      .json({ error: "Request body must contain the token" });
+      .json({ error: "Request body must contain only the token" });
   }
 
   const user = await getAuthenticatedUser(req, "authorized");

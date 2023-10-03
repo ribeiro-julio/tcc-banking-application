@@ -10,7 +10,7 @@ export async function loginController(req, res) {
   if (!validLoginRequestBody(req)) {
     return res
       .status(400)
-      .json({ error: "Request body must contain the email and password" });
+      .json({ error: "Request body must contain only the email and password" });
   }
 
   try {
