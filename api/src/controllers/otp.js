@@ -184,6 +184,8 @@ export async function otpVerifyController(req, res) {
   }
 
   try {
+    const prisma = new PrismaClient();
+
     if (user.otp_enabled) {
       const log = parseLog(req, `User ${user.id} - OTP must not be verified`);
       logger.warn(log.message, log.data);
