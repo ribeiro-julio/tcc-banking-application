@@ -72,6 +72,10 @@ export async function transferMoney(req, res) {
         .json({ error: "Destination must be different than the origin" });
     }
 
+    const destinationUser = await prisma.user.findUnique({
+      where: { email: destination },
+    });
+
     if (destinationUser === null) {
       const log = parseLog(req, `User ${user.id} - Destination not found`);
       logger.warn(log.message, log.data);
@@ -85,10 +89,6 @@ export async function transferMoney(req, res) {
 
       return res.status(403).json({ error: "Wrong PIN" });
     }
-
-    const destinationUser = await prisma.user.findUnique({
-      where: { email: destination },
-    });
 
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
