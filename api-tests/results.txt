@@ -1,0 +1,18 @@
+login validations:
+user:senhaforte - {"status":422,"data":"{"error":"Invalid email"}"}
+user@:senhaforte - {"status":422,"data":"{"error":"Invalid email"}"}
+user@domain:senhaforte - {"status":422,"data":"{"error":"Invalid email"}"}
+user@domain.:senhaforte - {"status":422,"data":"{"error":"Invalid email"}"}
+user@domain.com:senhaforte - {"status":401,"data":"{"error":"Incorrect email or password"}"}
+a@b.c:senhaforte - {"status":422,"data":"{"error":"Invalid email"}"}
+user@domain.com--:senhaforte - {"status":422,"data":"{"error":"Invalid email"}"}
+user@domain.com'--:senhaforte - {"status":422,"data":"{"error":"Invalid email"}"}
+user@domain.comuser@domain.comuser@domain.comuser@domain.comuser@domain.comuser@domain.comuser@domain.comuser@domain.comuser@domain.com:senhaforte - {"status":422,"data":"{"error":"Invalid email"}"}
+user.1@email.com:senhaforte - {"status":200,"data":"{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzODlmOTYxMS1mMzBlLTQ1MDEtOGZjZS03ZWIxMWZmNzRhZmMiLCJhdXRob3JpemVkIjp0cnVlLCJpYXQiOjE2OTY4OTgwNjcsImV4cCI6MTY5Njg5ODk2N30.O_TGxmVO6GTWZ1NOD23TCZm_cHJOn_8qml-Y_70kK-Q"}"}
+user.1@email.com:senhaforte - {"status":429,"data":"Request limit reached. Try again in 5 minutes"}
+
+2fa session
+otp/disable - {"status":401,"data":"{"error":"Unauthorized"}"}
+otp/generate - {"status":401,"data":"{"error":"Unauthorized"}"}
+otp/disable - {"status":200,"data":"{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzODlmOTYxMS1mMzBlLTQ1MDEtOGZjZS03ZWIxMWZmNzRhZmMiLCJhdXRob3JpemVkIjp0cnVlLCJpYXQiOjE2OTY4OTkzOTgsImV4cCI6MTY5NjkwMDI5OH0.NLV9B4fqIXD5k9XEo3kimapz2WxX_LdEnodblE3Fymg"}"}
+otp/generate - {"status":200,"data":"{"url":"otpauth://totp/tcc-banking-application.com:TCC%20Banking%20Application?issuer=tcc-banking-application.com&secret=NNDJEXTQJFOCJO2PF2YY57AT&algorithm=SHA1&digits=6&period=30","secret":"NNDJEXTQJFOCJO2PF2YY57AT"}"}
